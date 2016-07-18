@@ -23,7 +23,7 @@ def create_dist(domain,server_list):
   try:
     fp=open('/etc/passwd','r')
     for line in fp.readlines():
-      #m=re.search(r'www:x:(\d+):(\d+):.*',i)
+      
       if 'www' in line:
         www_uid=line.split(':')[2]
         www_gid=line.split(':')[3]
