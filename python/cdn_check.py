@@ -23,7 +23,7 @@ def cdn_check(url,hostip,item):
     #c.setopt(c.SSL_CIPHER_LIST, 'AES256-SHA')
     c.setopt(c.SSL_VERIFYPEER, 1)
     c.setopt(c.SSL_VERIFYHOST, 0)
-    
+
   try:
 
     c.perform()
@@ -64,7 +64,7 @@ abc=cdn_check(url,ip,item)
 print (abc)
 
 '''
-abc=cdn_check("http://static.qianyilc.com/FED/css/weixin-v2.0/base.css","10.101.1.122")
+abc=cdn_check("http://static.baidu.com/FED/css/weixin-v2.0/base.css","10.101.1.122")
 print('CODE: %d' % abc["HTTP_CODE"])
 print('TOTAL_TIME: %f' % abc["TOTAL_TIME"])
 print('CONNECT_TIME: %f' % abc["CONNECT_TIME"])
