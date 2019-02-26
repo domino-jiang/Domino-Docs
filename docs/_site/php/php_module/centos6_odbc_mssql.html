@@ -1,0 +1,217 @@
+<!doctype html>
+<!-- The Time Machine GitHub pages theme was designed and developed by Jon Rohan, on Feb 7, 2012. -->
+<!-- Follow him for fun. http://twitter.com/jonrohan. Tail his code on https://github.com/jonrohan -->
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <link rel="stylesheet" href="/assets/css/style.css?v=ebda61c809561a5e8d80d7eb89bd6acc341ed813">
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+  <script type="text/javascript" src="/assets/js/script.js"></script>
+
+  <title>Domino-Docs</title>
+  <meta name="description" content="">
+
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+</head>
+
+<body>
+
+  <div class="wrapper">
+    <header>
+      <h1 class="title">Domino-Docs</h1>
+    </header>
+    <div id="container">
+      <p class="tagline"></p>
+      <div id="main" role="main">
+        <div class="download-bar">
+        <div class="inner">
+          
+          <a href="http://github.com/domino-jiang/Domino-Docs" class="code">View Domino-Docs on GitHub</a>
+        </div>
+        <span class="blc"></span><span class="trc"></span>
+        </div>
+        <article class="markdown-body">
+          <h1 id="centos6-安装odbc-连接sqlserver">Centos6 安装odbc 连接sqlserver</h1>
+
+<h2 id="安装">安装</h2>
+<p>使用微软提供的连接驱动，以下是安装包的repo</p>
+
+<p>RedHat Enterprise Server 6</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Copy
+sudo su
+curl https://packages.microsoft.com/config/rhel/6/prod.repo &gt; /etc/yum.repos.d/mssql-release.repo
+exit
+sudo yum remove unixODBC-utf16 unixODBC-utf16-devel #to avoid conflicts
+sudo ACCEPT_EULA=Y yum install msodbcsql
+# optional: for bcp and sqlcmd
+sudo ACCEPT_EULA=Y yum install mssql-tools
+echo 'export PATH="$PATH:/opt/mssql-tools/bin"' &gt;&gt; ~/.bash_profile
+echo 'export PATH="$PATH:/opt/mssql-tools/bin"' &gt;&gt; ~/.bashrc
+source ~/.bashrc
+# optional: for unixODBC development headers
+sudo yum install unixODBC-devel
+</code></pre>
+</div>
+
+<p>RedHat Enterprise Server 7</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>Copy
+sudo su
+curl https://packages.microsoft.com/config/rhel/7/prod.repo &gt; /etc/yum.repos.d/mssql-release.repo
+exit
+sudo yum remove unixODBC-utf16 unixODBC-utf16-devel #to avoid conflicts
+sudo ACCEPT_EULA=Y yum install msodbcsql
+# optional: for bcp and sqlcmd
+sudo ACCEPT_EULA=Y yum install mssql-tools
+echo 'export PATH="$PATH:/opt/mssql-tools/bin"' &gt;&gt; ~/.bash_profile
+echo 'export PATH="$PATH:/opt/mssql-tools/bin"' &gt;&gt; ~/.bashrc
+source ~/.bashrc
+# optional: for unixODBC development headers
+sudo yum install unixODBC-devel
+</code></pre>
+</div>
+
+<h2 id="编译pdo-odbc">编译pdo-odbc</h2>
+
+<p><strong>重点是php的源码包里有一个ext文件夹，好多扩展其实已经放到里边了</strong></p>
+
+<p>解压php-5.6.17.tar.gz源码。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>tar zxf php-5.6.17.tar.gz
+cd php-5.6.17
+cd ext
+cd pdo-odbc
+#使用你现在所用的phpize
+/usr/local/bin/phpize
+./configure --with-pdo-odbc=unixODBC,/usr/ --with-php-config=/usr/local/bin/php-config
+make
+sudo make install
+</code></pre>
+</div>
+
+<h2 id="配置">配置</h2>
+<p>在安装了某个数据库的连接驱动后，应该会在odbcinst.ini中增加这个驱动。例如，我们安装了
+sql-server的连接驱动，可以在odbcinst.ini中看到它的相关配置。</p>
+
+<p>查看/etc/odbcinst.ini中，应该有了sql server的连接驱动</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[PostgreSQL]
+Description=ODBC for PostgreSQL
+Driver=/usr/lib/psqlodbcw.so
+Setup=/usr/lib/libodbcpsqlS.so
+Driver64=/usr/lib64/psqlodbcw.so
+Setup64=/usr/lib64/libodbcpsqlS.so
+FileUsage=1
+
+[MySQL]
+Description=ODBC for MySQL
+Driver=/usr/lib/libmyodbc5.so
+Setup=/usr/lib/libodbcmyS.so
+Driver64=/usr/lib64/libmyodbc5.so
+Setup64=/usr/lib64/libodbcmyS.so
+FileUsage=1
+
+[ODBC Driver 13 for SQL Server]
+Description=Microsoft ODBC Driver 13 for SQL Server
+Driver=/opt/microsoft/msodbcsql/lib64/libmsodbcsql-13.1.so.9.0
+UsageCount=1
+</code></pre>
+</div>
+<p><strong>注意这个配置文件中，方括号里边的就是驱动名称，用来在odbc.ini中选择驱动用的。</strong></p>
+
+<p>有了驱动后，需要配置连接文件，也就是数据库的连接参数。这个一般都放置在/etc/odbc.ini中。
+也可以自己定义位置，需要的时候指定好文件即可。</p>
+
+<p>odbc.ini例子</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>[MyDSN]
+Driver=ODBC Driver 13 for SQL Server
+Description=My Test ODBC Database Connection
+Trace=Yes
+Server=192.168.0.122
+Port=1433
+Database=mytest
+
+</code></pre>
+</div>
+
+<h2 id="连接测试">连接测试</h2>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>isql MyDSN _username_ _passwod_
+
+#以下是连接成功的输出信息
++---------------------------------------+
+| Connected!                            |
+|                                       |
+| sql-statement                         |
+| help [tablename]                      |
+| quit                                  |
+|                                       |
++---------------------------------------+
+SQL&gt; quit
+
+</code></pre>
+</div>
+
+<p>使用php代码连接测试。</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>&lt;?php
+
+ putenv('ODBCSYSINI=/etc/');
+ putenv('ODBCINI=/etc/odbc.ini');
+
+    $username = "xxxx";
+    $password = "xxxxxx";
+    try {
+      $dbh = new PDO("odbc:MyDSN",
+                    "$username",
+                    "$password"
+                   );
+    } catch (PDOException $exception) {
+      echo $exception-&gt;getMessage();
+      exit;
+    }
+    echo var_dump($dbh);
+    unset($dbh);
+?&gt;
+
+/usr/local/bin/php test.php 
+
+object(PDO)#1 (0) {
+}
+
+
+</code></pre>
+</div>
+
+
+        </article>
+      </div>
+    </div>
+    <footer>
+      <div class="owner">
+      
+      <p><a href="http://github.com/domino-jiang" class="avatar"><img src="http://github.com/domino-jiang.png" width="48" height="48"></a> <a href="http://github.com/domino-jiang">domino-jiang</a> maintains <a href="http://github.com/domino-jiang/Domino-Docs">Domino-Docs</a></p>
+      
+
+       
+
+      </div>
+      <div class="creds">
+        <small>This page generated using <a href="https://pages.github.com/">GitHub Pages</a><br>theme by <a href="https://twitter.com/jonrohan/">Jon Rohan</a></small>
+      </div>
+    </footer>
+  </div>
+  <div class="current-section">
+    <a href="#top">Scroll to top</a>
+    <a href="http://github.com/domino-jiang/Domino-Docs/tarball/gh-pages" class="tar">tar</a><a href="http://github.com/domino-jiang/Domino-Docs/zipball/gh-pages" class="zip">zip</a><a href="" class="code">source code</a>
+    <p class="name"></p>
+  </div>
+
+  
+</body>
+</html>
